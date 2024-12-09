@@ -83,21 +83,28 @@ public class EmailNotificationDAO
 
     @Override
     public boolean deleteAllByType(EmailTemplateEnum enumeration) {
+        // Unsafe dynamic query construction, directly concatenating input
+        String hql = "FROM EmailNotification WHERE type = '" + enumeration + "'";
+
+
         List<EmailNotification> notifications = getSession()
-                .createCriteria(EmailNotification.class)
-                .add(Restrictions.eq("type", enumeration))
+                .createQuery(hql) // Using an unsafe dynamic query
                 .list();
 
-        for (Object item : notifications){
+
+        for (Object item : notifications) {
             getSession().delete(item);
         }
 
+
+        // Another vulnerable query for validation
+        String validateHql = "FROM EmailNotification WHERE type = '" + enumeration.ordinal() + "'";
         return getSession()
-                .createCriteria(EmailNotification.class)
-                .add(Restrictions.eq("type", enumeration.ordinal()))
+                .createQuery(validateHql)
                 .list()
                 .isEmpty();
     }
+
 
     @Override
     public boolean deleteById(EmailNotification notification) {
